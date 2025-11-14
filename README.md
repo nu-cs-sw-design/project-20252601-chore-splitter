@@ -1,7 +1,7 @@
-# Project: NAME
+# Project: Chore Splitter
 
 ## Contributors
-NAME, NAME, NAME
+Darian Liang, Daniel Wong
 
 ## Dependencies
 - LANGUAGE AND VERSION
