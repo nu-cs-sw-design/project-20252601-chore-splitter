@@ -1,3 +1,4 @@
 HH1763237028085|Yiji's Household|My Household|HC192296|yiji@northwestern.edu
+HH1763238013567|Yiji's 2nd Household|Testing Add Chores|HC205726|yiji@northwestern.edu
 HH1763236598479|Fame|First Household|HC169844|test
 HH1763236843025|Daniel and Darian 1|Testing household|HC472254|test

@@ -287,7 +287,7 @@ public class ChoreSplitterApp {
 
             switch (choice) {
                 case "1":
-                    System.out.println("\n[Feature not yet implemented]");
+                    addChore(householdId);
                     break;
                 case "2":
                     System.out.println("\n[Feature not yet implemented]");
@@ -301,6 +301,130 @@ public class ChoreSplitterApp {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
+    }
+
+
+    public static void addChore(String householdId) {
+        Household household = households.get(householdId);
+        if (household == null) {
+            System.out.println("Household not found!");
+            return;
+        }
+
+        System.out.println("\n--- ADD CHORE ---");
+
+        String description = "";
+        String priority = "";
+        String type = "";
+        String assignmentType = "";
+        String assignedTo = "";
+
+        // Get chore description
+        while (description.isEmpty()) {
+            System.out.print("Chore Description: ");
+            description = scanner.nextLine().trim();
+            if (description.isEmpty()) {
+                System.out.println("Chore description cannot be empty. Please try again.");
+            }
+        }
+
+        // Get priority level
+        while (priority.isEmpty()) {
+            System.out.print("Priority Level (Low/Medium/High): ");
+            priority = scanner.nextLine().trim();
+            if (priority.isEmpty()) {
+                System.out.println("Priority level cannot be empty. Please try again.");
+            } else if (!priority.equalsIgnoreCase("Low") &&
+                       !priority.equalsIgnoreCase("Medium") &&
+                       !priority.equalsIgnoreCase("High")) {
+                System.out.println("Invalid priority. Please enter Low, Medium, or High.");
+                priority = "";
+            }
+        }
+
+        // Get chore type
+        while (type.isEmpty()) {
+            System.out.print("Chore Type (Recurring/One-time): ");
+            type = scanner.nextLine().trim();
+            if (type.isEmpty()) {
+                System.out.println("Chore type cannot be empty. Please try again.");
+            } else if (!type.equalsIgnoreCase("Recurring") &&
+                       !type.equalsIgnoreCase("One-time")) {
+                System.out.println("Invalid type. Please enter Recurring or One-time.");
+                type = "";
+            }
+        }
+
+        // Get assignment type
+        while (assignmentType.isEmpty()) {
+            System.out.print("Assignment Type (Random/Manual): ");
+            assignmentType = scanner.nextLine().trim();
+            if (assignmentType.isEmpty()) {
+                System.out.println("Assignment type cannot be empty. Please try again.");
+            } else if (!assignmentType.equalsIgnoreCase("Random") &&
+                       !assignmentType.equalsIgnoreCase("Manual")) {
+                System.out.println("Invalid assignment type. Please enter Random or Manual.");
+                assignmentType = "";
+            }
+        }
+
+        // Handle assignment
+        if (assignmentType.equalsIgnoreCase("Random")) {
+            // Randomly assign to a member
+            if (household.memberEmails.isEmpty()) {
+                System.out.println("No members in household to assign chore to!");
+                return;
+            }
+            int randomIndex = (int) (Math.random() * household.memberEmails.size());
+            assignedTo = household.memberEmails.get(randomIndex);
+            User assignedUser = users.get(assignedTo);
+            System.out.println("Randomly assigned to: " + (assignedUser != null ? assignedUser.name : assignedTo));
+        } else {
+            // Manual assignment
+            System.out.println("\nAvailable members:");
+            for (int i = 0; i < household.memberEmails.size(); i++) {
+                String email = household.memberEmails.get(i);
+                User member = users.get(email);
+                System.out.println((i + 1) + ". " + (member != null ? member.name : email) + " (" + email + ")");
+            }
+
+            int memberChoice = -1;
+            while (memberChoice < 1 || memberChoice > household.memberEmails.size()) {
+                System.out.print("Select member number (1-" + household.memberEmails.size() + "): ");
+                try {
+                    memberChoice = Integer.parseInt(scanner.nextLine().trim());
+                    if (memberChoice < 1 || memberChoice > household.memberEmails.size()) {
+                        System.out.println("Invalid selection. Please try again.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Please enter a valid number.");
+                }
+            }
+            assignedTo = household.memberEmails.get(memberChoice - 1);
+            User assignedUser = users.get(assignedTo);
+            System.out.println("Assigned to: " + (assignedUser != null ? assignedUser.name : assignedTo));
+        }
+
+        // Create the chore
+        String choreId = "CH" + System.currentTimeMillis();
+        Chore newChore = new Chore(choreId, description);
+        newChore.priority = priority;
+        newChore.type = type;
+        newChore.assignedTo = assignedTo;
+        newChore.completed = false;
+
+        // Add chore to household
+        household.chores.add(newChore);
+
+        System.out.println("\n✓ Chore added successfully!");
+        System.out.println("Description: " + newChore.description);
+        System.out.println("Priority: " + newChore.priority);
+        System.out.println("Type: " + newChore.type);
+        User assignedUser = users.get(assignedTo);
+        System.out.println("Assigned to: " + (assignedUser != null ? assignedUser.name : assignedTo));
+
+        // Save data
+        saveData();
     }
 
 
@@ -349,6 +473,38 @@ public class ChoreSplitterApp {
                     }
                 }
                 householdReader.close();
+            }
+
+            // Load chores
+            File choresFile = new File("data/chores.txt");
+            if (choresFile.exists()) {
+                BufferedReader choreReader = new BufferedReader(new FileReader(choresFile));
+                String line;
+                while ((line = choreReader.readLine()) != null) {
+                    String[] parts = line.split("\\|");
+                    if (parts.length >= 6) {
+                        String choreId = parts[0];
+                        String householdId = parts[1];
+                        String description = parts[2];
+                        String priority = parts[3];
+                        String type = parts[4];
+                        String assignedTo = parts[5];
+                        boolean completed = parts.length > 6 ? Boolean.parseBoolean(parts[6]) : false;
+
+                        Chore chore = new Chore(choreId, description);
+                        chore.priority = priority;
+                        chore.type = type;
+                        chore.assignedTo = assignedTo;
+                        chore.completed = completed;
+
+                        // Add chore to household
+                        Household household = households.get(householdId);
+                        if (household != null) {
+                            household.chores.add(chore);
+                        }
+                    }
+                }
+                choreReader.close();
             }
 
             // Update user household associations
@@ -402,6 +558,26 @@ public class ChoreSplitterApp {
                 householdWriter.newLine();
             }
             householdWriter.close();
+
+            // Save chores
+            File choresFile = new File("data/chores.txt");
+            BufferedWriter choreWriter = new BufferedWriter(new FileWriter(choresFile));
+            for (Household household : households.values()) {
+                for (Chore chore : household.chores) {
+                    StringBuilder line = new StringBuilder();
+                    line.append(chore.id).append("|");
+                    line.append(household.id).append("|");
+                    line.append(chore.description).append("|");
+                    line.append(chore.priority).append("|");
+                    line.append(chore.type).append("|");
+                    line.append(chore.assignedTo).append("|");
+                    line.append(chore.completed);
+
+                    choreWriter.write(line.toString());
+                    choreWriter.newLine();
+                }
+            }
+            choreWriter.close();
 
         } catch (IOException e) {
             System.out.println("Error saving data: " + e.getMessage());
