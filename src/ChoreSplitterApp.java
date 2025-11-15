@@ -272,7 +272,9 @@ public class ChoreSplitterApp {
             System.out.println("\nChores: " + household.chores.size());
             if (!household.chores.isEmpty()) {
                 for (Chore chore : household.chores) {
-                    System.out.println("  - " + chore.description + " [" + (chore.completed ? "✓" : " ") + "]");
+                    User assignedUser = users.get(chore.assignedTo);
+                    String assignedName = assignedUser != null ? assignedUser.name : chore.assignedTo;
+                    System.out.println("  - " + chore.description + " (Assigned to: " + assignedName + ") [" + (chore.completed ? "✓" : " ") + "]");
                 }
             }
 

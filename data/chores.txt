@@ -1,2 +1,3 @@
 CH1763238062292|HH1763238013567|Wash Dishes|Medium|Recurring|yiji@northwestern.edu|false
 CH1763238112108|HH1763238013567|Take out trash|High|One-time|yiji@northwestern.edu|false
+CH1763238607061|HH1763238573233|Clean counters|Low|One-time|yiji@northwestern.edu|false
