@@ -177,7 +177,7 @@ public class ChoreSplitterApp {
 
             switch (choice) {
                 case "1":
-                    System.out.println("\n[Feature not yet implemented]");
+                    createHousehold();
                     break;
                 case "2":
                     System.out.println("\n[Feature not yet implemented]");
@@ -192,6 +192,110 @@ public class ChoreSplitterApp {
                     System.out.println("Logging out...");
                     currentUser = null;
                     saveData();
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+
+    public static void createHousehold() {
+        System.out.println("\n--- CREATE HOUSEHOLD ---");
+
+        String name = "";
+        String description = "";
+
+        // Get household name
+        while (name.isEmpty()) {
+            System.out.print("Household Name: ");
+            name = scanner.nextLine().trim();
+            if (name.isEmpty()) {
+                System.out.println("Household name cannot be empty. Please try again.");
+            }
+        }
+
+        // Get household description
+        while (description.isEmpty()) {
+            System.out.print("Household Description: ");
+            description = scanner.nextLine().trim();
+            if (description.isEmpty()) {
+                System.out.println("Household description cannot be empty. Please try again.");
+            }
+        }
+
+        // Create household with unique ID
+        String householdId = "HH" + System.currentTimeMillis();
+        Household newHousehold = new Household(householdId, name, description);
+
+        // Add current user as the first member
+        newHousehold.memberEmails.add(currentUser.email);
+        currentUser.householdIds.add(householdId);
+
+        // Store household
+        households.put(householdId, newHousehold);
+
+        System.out.println("\n✓ Household created successfully!");
+        System.out.println("Household Name: " + newHousehold.name);
+        System.out.println("Join Code: " + newHousehold.joinCode);
+        System.out.println("\nShare this code with other members to invite them to join!");
+
+        // Save data
+        saveData();
+
+        // Show household dashboard
+        showHouseholdDashboard(householdId);
+    }
+
+
+    public static void showHouseholdDashboard(String householdId) {
+        Household household = households.get(householdId);
+        if (household == null) {
+            System.out.println("Household not found!");
+            return;
+        }
+
+        while (true) {
+            System.out.println("\n=====================================");
+            System.out.println("  HOUSEHOLD: " + household.name);
+            System.out.println("=====================================");
+            System.out.println("Description: " + household.description);
+            System.out.println("Join Code: " + household.joinCode);
+            System.out.println("Members: " + household.memberEmails.size());
+            System.out.println("\nMembers List:");
+            for (String email : household.memberEmails) {
+                User member = users.get(email);
+                if (member != null) {
+                    System.out.println("  - " + member.name + " (" + email + ")");
+                }
+            }
+            System.out.println("\nChores: " + household.chores.size());
+            if (!household.chores.isEmpty()) {
+                for (Chore chore : household.chores) {
+                    System.out.println("  - " + chore.description + " [" + (chore.completed ? "✓" : " ") + "]");
+                }
+            }
+
+            System.out.println("\nOptions:");
+            System.out.println("1. Add Chore");
+            System.out.println("2. Remove Chore");
+            System.out.println("3. View Members");
+            System.out.println("4. Back to Main Screen");
+            System.out.print("\nEnter choice (1-4): ");
+
+            String choice = scanner.nextLine().trim();
+
+            switch (choice) {
+                case "1":
+                    System.out.println("\n[Feature not yet implemented]");
+                    break;
+                case "2":
+                    System.out.println("\n[Feature not yet implemented]");
+                    break;
+                case "3":
+                    System.out.println("\n[Feature not yet implemented]");
+                    break;
+                case "4":
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -225,7 +329,36 @@ public class ChoreSplitterApp {
             // Load households (placeholder for now)
             File householdsFile = new File("data/households.txt");
             if (householdsFile.exists()) {
-                // Will implement later
+                BufferedReader householdReader = new BufferedReader(new FileReader(householdsFile));
+                String line;
+                while ((line = householdReader.readLine()) != null) {
+                    String[] parts = line.split("\\|");
+                    if (parts.length >= 4) {
+                        Household household = new Household(parts[0], parts[1], parts[2]);
+                        household.joinCode = parts[3];
+
+                        // Load members
+                        if (parts.length > 4 && !parts[4].isEmpty()) {
+                            String[] members = parts[4].split(",");
+                            for (String memberEmail : members) {
+                                household.memberEmails.add(memberEmail);
+                            }
+                        }
+
+                        households.put(parts[0], household);
+                    }
+                }
+                householdReader.close();
+            }
+
+            // Update user household associations
+            for (Household household : households.values()) {
+                for (String memberEmail : household.memberEmails) {
+                    User user = users.get(memberEmail);
+                    if (user != null && !user.householdIds.contains(household.id)) {
+                        user.householdIds.add(household.id);
+                    }
+                }
             }
 
         } catch (IOException e) {
@@ -251,6 +384,24 @@ public class ChoreSplitterApp {
                 writer.newLine();
             }
             writer.close();
+
+            // Save households
+            File householdsFile = new File("data/households.txt");
+            BufferedWriter householdWriter = new BufferedWriter(new FileWriter(householdsFile));
+            for (Household household : households.values()) {
+                StringBuilder line = new StringBuilder();
+                line.append(household.id).append("|");
+                line.append(household.name).append("|");
+                line.append(household.description).append("|");
+                line.append(household.joinCode).append("|");
+
+                // Save members
+                line.append(String.join(",", household.memberEmails));
+
+                householdWriter.write(line.toString());
+                householdWriter.newLine();
+            }
+            householdWriter.close();
 
         } catch (IOException e) {
             System.out.println("Error saving data: " + e.getMessage());
@@ -312,4 +463,3 @@ class Chore {
         this.completed = false;
     }
 }
-
