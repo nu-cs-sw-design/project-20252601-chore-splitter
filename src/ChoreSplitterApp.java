@@ -180,10 +180,10 @@ public class ChoreSplitterApp {
                     createHousehold();
                     break;
                 case "2":
-                    System.out.println("\n[Feature not yet implemented]");
+                    joinHousehold();
                     break;
                 case "3":
-                    System.out.println("\n[Feature not yet implemented]");
+                    openHousehold();
                     break;
                 case "4":
                     System.out.println("\n[Feature not yet implemented]");
@@ -197,6 +197,118 @@ public class ChoreSplitterApp {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
+    }
+
+
+    public static void joinHousehold() {
+        System.out.println("\n--- JOIN HOUSEHOLD ---");
+
+        String joinCode = "";
+
+        // Get join code
+        while (joinCode.isEmpty()) {
+            System.out.print("Enter Household Join Code: ");
+            joinCode = scanner.nextLine().trim();
+            if (joinCode.isEmpty()) {
+                System.out.println("Join code cannot be empty. Please try again.");
+            }
+        }
+
+        // Find household by join code
+        Household foundHousehold = null;
+        for (Household household : households.values()) {
+            if (household.joinCode.equals(joinCode)) {
+                foundHousehold = household;
+                break;
+            }
+        }
+
+        // Validate join code
+        if (foundHousehold == null) {
+            System.out.println("\n✗ Invalid join code. No household found with that code.");
+            System.out.print("Would you like to try again? (y/n): ");
+            String retry = scanner.nextLine().trim().toLowerCase();
+            if (retry.equals("y") || retry.equals("yes")) {
+                joinHousehold();
+            }
+            return;
+        }
+
+        // Check if user is already a member
+        if (foundHousehold.memberEmails.contains(currentUser.email)) {
+            System.out.println("\n✓ You are already a member of this household!");
+            System.out.println("Household: " + foundHousehold.name);
+            System.out.print("\nWould you like to view the household dashboard? (y/n): ");
+            String viewDashboard = scanner.nextLine().trim().toLowerCase();
+            if (viewDashboard.equals("y") || viewDashboard.equals("yes")) {
+                showHouseholdDashboard(foundHousehold.id);
+            }
+            return;
+        }
+
+        // Add user to household
+        foundHousehold.memberEmails.add(currentUser.email);
+        currentUser.householdIds.add(foundHousehold.id);
+
+        System.out.println("\n✓ Successfully joined household!");
+        System.out.println("Household Name: " + foundHousehold.name);
+        System.out.println("Description: " + foundHousehold.description);
+        System.out.println("Members: " + foundHousehold.memberEmails.size());
+
+        // Save data
+        saveData();
+
+        // Show household dashboard
+        showHouseholdDashboard(foundHousehold.id);
+    }
+
+
+    public static void openHousehold() {
+        System.out.println("\n--- OPEN HOUSEHOLD ---");
+
+        // Check if user is member of any households
+        if (currentUser.householdIds.isEmpty()) {
+            System.out.println("You are not a member of any households yet.");
+            System.out.println("Please create or join a household first.");
+            return;
+        }
+
+        // Display list of households user is member of
+        System.out.println("\nYour Households:");
+        List<Household> userHouseholds = new ArrayList<>();
+        for (String householdId : currentUser.householdIds) {
+            Household household = households.get(householdId);
+            if (household != null) {
+                userHouseholds.add(household);
+                System.out.println((userHouseholds.size()) + ". " + household.name + " (" + household.memberEmails.size() + " members)");
+            }
+        }
+
+        if (userHouseholds.isEmpty()) {
+            System.out.println("No valid households found.");
+            return;
+        }
+
+        // Get user's choice
+        int choice = -1;
+        while (choice < 1 || choice > userHouseholds.size()) {
+            System.out.print("\nSelect household number (1-" + userHouseholds.size() + ") or 0 to cancel: ");
+            try {
+                choice = Integer.parseInt(scanner.nextLine().trim());
+                if (choice == 0) {
+                    return;
+                }
+                if (choice < 1 || choice > userHouseholds.size()) {
+                    System.out.println("Invalid selection. Please try again.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+
+        // Show selected household dashboard
+        Household selectedHousehold = userHouseholds.get(choice - 1);
+        showHouseholdDashboard(selectedHousehold.id);
     }
 
 
