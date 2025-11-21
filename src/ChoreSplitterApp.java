@@ -610,6 +610,7 @@ class Household {
     String joinCode;
     List<String> memberEmails;
     List<Chore> chores;
+    String ownerEmail; // <- household creator
 
     public Household(String id, String name, String description) {
         this.id = id;
@@ -634,6 +635,7 @@ class Chore {
     String assignedTo;
     boolean completed;
     Date dueDate;
+    Date completionTimestamp;
 
     public Chore(String id, String description) {
         this.id = id;
