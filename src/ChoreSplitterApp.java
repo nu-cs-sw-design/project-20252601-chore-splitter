@@ -585,6 +585,44 @@ public class ChoreSplitterApp {
             System.out.println("Error saving data: " + e.getMessage());
         }
     }
+
+    private static String readNonEmpty(String prompt) {
+        String v = "";
+        while (v.isEmpty()) {
+            System.out.print(prompt + ": ");
+            v = scanner.nextLine().trim();
+            if (v.isEmpty()) {
+                System.out.println(prompt + " cannot be empty. Please try again.");
+            }
+        return v;
+    }
+    private static String readEnum(String prompt, String[] allowed) {
+        Set<String> norm = new HashSet<>();
+        for (String a : allowed) norm.add(a.toLowerCase());
+        while (true) {
+            System.out.print(prompt + ": ");
+            String v = scanner.nextLine().trim();
+            if (norm.contains(v.toLowerCase())) return capitalizeChoice(v, allowed);
+            System.out.println("Invalid value. Allowed: " + String.join("/", allowed));
+        }
+    }
+    private static int readIntInRange(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt + " (" + min + "-" + max + "): ");
+            try {
+                int n = Integer.parseInt(scanner.nextLine().trim());
+                if (n >= min && n <= max) return n;
+            } catch (NumberFormatException ignored) {}
+            System.out.println("Invalid number. Try again.");
+        }
+    }
+    private static String capitalizeChoice(String v, String[] allowed) {
+        for (String a : allowed) {
+            if (a.equalsIgnoreCase(v)) return a; // return canonical casing
+        }
+        return v;
+    }
+
 }
 
 
