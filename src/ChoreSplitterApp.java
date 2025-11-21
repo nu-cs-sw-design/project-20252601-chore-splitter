@@ -594,8 +594,10 @@ public class ChoreSplitterApp {
             if (v.isEmpty()) {
                 System.out.println(prompt + " cannot be empty. Please try again.");
             }
+        }
         return v;
     }
+
     private static String readEnum(String prompt, String[] allowed) {
         Set<String> norm = new HashSet<>();
         for (String a : allowed) norm.add(a.toLowerCase());
