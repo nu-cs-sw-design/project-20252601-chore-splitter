@@ -186,7 +186,7 @@ public class ChoreSplitterApp {
                     openHousehold();
                     break;
                 case "4":
-                    System.out.println("\n[Feature not yet implemented]");
+                    generateReport();
                     break;
                 case "5":
                     System.out.println("Logging out...");
@@ -196,6 +196,243 @@ public class ChoreSplitterApp {
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
+        }
+    }
+
+
+    public static void generateReport() {
+        System.out.println("\n--- GENERATE STATISTICS REPORT ---");
+
+        // Check if user is member of any households
+        if (currentUser.householdIds.isEmpty()) {
+            System.out.println("You are not a member of any households yet.");
+            System.out.println("No chores to report on.");
+            return;
+        }
+
+        String startDateStr = "";
+        String endDateStr = "";
+        Date startDate = null;
+        Date endDate = null;
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("MM/dd/yyyy");
+        dateFormat.setLenient(false);
+
+        // Get start date with strict format validation
+        while (startDate == null) {
+            System.out.print("Enter Start Date (MM/DD/YYYY): ");
+            startDateStr = scanner.nextLine().trim();
+            if (startDateStr.isEmpty()) {
+                System.out.println("Start date cannot be empty. Please try again.");
+                continue;
+            }
+            // Check format before parsing
+            if (!startDateStr.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                System.out.println("Invalid date format. Please enter date strictly as MM/DD/YYYY (e.g., 01/15/2025).");
+                continue;
+            }
+            try {
+                startDate = dateFormat.parse(startDateStr);
+            } catch (java.text.ParseException e) {
+                System.out.println("Invalid date. Please enter a valid date in MM/DD/YYYY format.");
+                startDateStr = "";
+            }
+        }
+
+        // Get end date with strict format validation
+        while (endDate == null) {
+            System.out.print("Enter End Date (MM/DD/YYYY): ");
+            endDateStr = scanner.nextLine().trim();
+            if (endDateStr.isEmpty()) {
+                System.out.println("End date cannot be empty. Please try again.");
+                continue;
+            }
+            // Check format before parsing
+            if (!endDateStr.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                System.out.println("Invalid date format. Please enter date strictly as MM/DD/YYYY (e.g., 12/31/2025).");
+                continue;
+            }
+            try {
+                endDate = dateFormat.parse(endDateStr);
+            } catch (java.text.ParseException e) {
+                System.out.println("Invalid date. Please enter a valid date in MM/DD/YYYY format.");
+                endDateStr = "";
+            }
+        }
+
+        // Validate date range (Exception Flow A)
+        if (startDate.after(endDate)) {
+            System.out.println("\n✗ Invalid date range: Start Date cannot be after End Date.");
+            System.out.print("Would you like to try again? (y/n): ");
+            String retry = scanner.nextLine().trim().toLowerCase();
+            if (retry.equals("y") || retry.equals("yes")) {
+                generateReport();
+            }
+            return;
+        }
+
+        // Query completed chores from user's households (no filter option - completed only)
+        List<ChoreReportEntry> reportEntries = new ArrayList<>();
+        for (String householdId : currentUser.householdIds) {
+            Household household = households.get(householdId);
+            if (household != null) {
+                for (Chore chore : household.chores) {
+                    // Only include completed chores
+                    if (chore.completed && chore.completionDate != null) {
+                        try {
+                            Date choreCompletionDate = dateFormat.parse(chore.completionDate);
+                            if (!choreCompletionDate.before(startDate) && !choreCompletionDate.after(endDate)) {
+                                User assignedUser = users.get(chore.assignedTo);
+                                String assignedName = assignedUser != null ? assignedUser.name : chore.assignedTo;
+                                reportEntries.add(new ChoreReportEntry(
+                                    household.name,
+                                    chore.description,
+                                    chore.priority,
+                                    chore.type,
+                                    assignedName,
+                                    chore.completed,
+                                    chore.completionDate
+                                ));
+                            }
+                        } catch (java.text.ParseException e) {
+                            // Skip chores with invalid completion dates
+                        }
+                    }
+                }
+            }
+        }
+
+        // Exception Flow B: No data found
+        if (reportEntries.isEmpty()) {
+            System.out.println("\n✗ No completed chores found in the specified date range.");
+            System.out.println("Date Range: " + startDateStr + " to " + endDateStr);
+            System.out.println("\nOptions:");
+            System.out.println("1. Expand date range and try again");
+            System.out.println("2. Generate empty report anyway");
+            System.out.println("3. Cancel");
+            System.out.print("Select option (1-3): ");
+            String noDataChoice = scanner.nextLine().trim();
+
+            if (noDataChoice.equals("1")) {
+                generateReport();
+                return;
+            } else if (noDataChoice.equals("2")) {
+                // Continue to generate empty report
+            } else {
+                System.out.println("Report generation cancelled.");
+                return;
+            }
+        }
+
+        // Generate report file
+        try {
+            // Create reports directory if it doesn't exist
+            File reportsDir = new File("reports");
+            if (!reportsDir.exists()) {
+                reportsDir.mkdir();
+            }
+
+            // Generate filename with timestamp
+            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String filename = "ChoreReport_" + timestamp + ".txt";
+            File reportFile = new File("reports/" + filename);
+
+            // Write report
+            BufferedWriter writer = new BufferedWriter(new FileWriter(reportFile));
+
+            // Write header
+            writer.write("=====================================");
+            writer.newLine();
+            writer.write("  CHORE COMPLETION REPORT");
+            writer.newLine();
+            writer.write("=====================================");
+            writer.newLine();
+            writer.write("Generated: " + new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+            writer.newLine();
+            writer.write("User: " + currentUser.name + " (" + currentUser.email + ")");
+            writer.newLine();
+            writer.write("Date Range: " + startDateStr + " to " + endDateStr);
+            writer.newLine();
+            writer.write("Total Chores: " + reportEntries.size());
+            writer.newLine();
+            writer.newLine();
+
+            if (reportEntries.isEmpty()) {
+                writer.write("No chores found in the specified date range.");
+                writer.newLine();
+            } else {
+                // Group by household
+                Map<String, List<ChoreReportEntry>> byHousehold = new HashMap<>();
+                for (ChoreReportEntry entry : reportEntries) {
+                    byHousehold.computeIfAbsent(entry.householdName, k -> new ArrayList<>()).add(entry);
+                }
+
+                // Write chores by household
+                for (Map.Entry<String, List<ChoreReportEntry>> householdEntry : byHousehold.entrySet()) {
+                    writer.write("Household: " + householdEntry.getKey());
+                    writer.newLine();
+                    writer.write("-------------------------------------");
+                    writer.newLine();
+
+                    for (ChoreReportEntry chore : householdEntry.getValue()) {
+                        writer.write("  • " + chore.description);
+                        writer.newLine();
+                        writer.write("    - Assigned to: " + chore.assignedName);
+                        writer.newLine();
+                        writer.write("    - Priority: " + chore.priority);
+                        writer.newLine();
+                        writer.write("    - Type: " + chore.type);
+                        writer.newLine();
+                        writer.write("    - Completed on: " + chore.completionDate);
+                        writer.newLine();
+                        writer.newLine();
+                    }
+                    writer.newLine();
+                }
+
+                // Write summary statistics
+                writer.write("=====================================");
+                writer.newLine();
+                writer.write("  SUMMARY STATISTICS");
+                writer.newLine();
+                writer.write("=====================================");
+                writer.newLine();
+                writer.write("Total Completed Chores: " + reportEntries.size());
+                writer.newLine();
+
+                // Count by priority
+                Map<String, Integer> byPriority = new HashMap<>();
+                for (ChoreReportEntry entry : reportEntries) {
+                    byPriority.put(entry.priority, byPriority.getOrDefault(entry.priority, 0) + 1);
+                }
+                writer.write("\nBy Priority:");
+                writer.newLine();
+                for (Map.Entry<String, Integer> entry : byPriority.entrySet()) {
+                    writer.write("  - " + entry.getKey() + ": " + entry.getValue());
+                    writer.newLine();
+                }
+
+                // Count by person
+                Map<String, Integer> byPerson = new HashMap<>();
+                for (ChoreReportEntry entry : reportEntries) {
+                    byPerson.put(entry.assignedName, byPerson.getOrDefault(entry.assignedName, 0) + 1);
+                }
+                writer.write("\nBy Person:");
+                writer.newLine();
+                for (Map.Entry<String, Integer> entry : byPerson.entrySet()) {
+                    writer.write("  - " + entry.getKey() + ": " + entry.getValue() + " chore(s)");
+                    writer.newLine();
+                }
+            }
+
+            writer.close();
+
+            // Display confirmation
+            System.out.println("\n✓ Report generated successfully!");
+            System.out.println("Report saved to: " + reportFile.getAbsolutePath());
+            System.out.println("Total chores in report: " + reportEntries.size());
+
+        } catch (IOException e) {
+            System.out.println("✗ Error generating report: " + e.getMessage());
         }
     }
 
@@ -685,7 +922,7 @@ public class ChoreSplitterApp {
                 reader.close();
             }
 
-            // Load households (placeholder for now)
+            // Load households
             File householdsFile = new File("data/households.txt");
             if (householdsFile.exists()) {
                 BufferedReader householdReader = new BufferedReader(new FileReader(householdsFile));
@@ -809,7 +1046,7 @@ public class ChoreSplitterApp {
                     line.append(chore.type).append("|");
                     line.append(chore.assignedTo).append("|");
                     line.append(chore.completed).append("|");
-                    line.append(chore.completionDate); // Persist completionDate
+                    line.append(chore.completionDate);
 
                     choreWriter.write(line.toString());
                     choreWriter.newLine();
@@ -844,6 +1081,7 @@ public class ChoreSplitterApp {
             System.out.println("Invalid value. Allowed: " + String.join("/", allowed));
         }
     }
+
     private static int readIntInRange(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt + " (" + min + "-" + max + "): ");
@@ -854,9 +1092,10 @@ public class ChoreSplitterApp {
             System.out.println("Invalid number. Try again.");
         }
     }
+
     private static String capitalizeChoice(String v, String[] allowed) {
         for (String a : allowed) {
-            if (a.equalsIgnoreCase(v)) return a; // return canonical casing
+            if (a.equalsIgnoreCase(v)) return a;
         }
         return v;
     }
@@ -886,7 +1125,7 @@ class Household {
     String joinCode;
     List<String> memberEmails;
     List<Chore> chores;
-    String ownerEmail; // <- household creator
+    String ownerEmail;
 
     public Household(String id, String name, String description) {
         this.id = id;
@@ -907,16 +1146,37 @@ class Chore {
     String id;
     String description;
     String priority;
-    String type; // recurring or one-time
+    String type;
     String assignedTo;
     boolean completed;
     Date dueDate;
     Date completionTimestamp;
-    String completionDate; // Added completionDate field
+    String completionDate;
 
     public Chore(String id, String description) {
         this.id = id;
         this.description = description;
         this.completed = false;
+    }
+}
+
+
+class ChoreReportEntry {
+    String householdName;
+    String description;
+    String priority;
+    String type;
+    String assignedName;
+    boolean completed;
+    String completionDate;
+
+    public ChoreReportEntry(String householdName, String description, String priority, String type, String assignedName, boolean completed, String completionDate) {
+        this.householdName = householdName;
+        this.description = description;
+        this.priority = priority;
+        this.type = type;
+        this.assignedName = assignedName;
+        this.completed = completed;
+        this.completionDate = completionDate;
     }
 }
