@@ -381,21 +381,47 @@ public class ChoreSplitterApp {
                     System.out.println("  - " + member.name + " (" + email + ")");
                 }
             }
-            System.out.println("\nChores: " + household.chores.size());
-            if (!household.chores.isEmpty()) {
-                for (Chore chore : household.chores) {
+
+            // Separate active and completed chores
+            List<Chore> activeChores = new ArrayList<>();
+            List<Chore> completedChores = new ArrayList<>();
+            for (Chore chore : household.chores) {
+                if (chore.completed) {
+                    completedChores.add(chore);
+                } else {
+                    activeChores.add(chore);
+                }
+            }
+
+            System.out.println("\nActive Chores: " + activeChores.size());
+            if (!activeChores.isEmpty()) {
+                for (Chore chore : activeChores) {
                     User assignedUser = users.get(chore.assignedTo);
                     String assignedName = assignedUser != null ? assignedUser.name : chore.assignedTo;
-                    System.out.println("  - " + chore.description + " (Assigned to: " + assignedName + ") [" + (chore.completed ? "✓" : " ") + "]");
+                    System.out.println("  - " + chore.description + " (Assigned to: " + assignedName + ", Priority: " + chore.priority + ")");
                 }
+            } else {
+                System.out.println("  No active chores.");
+            }
+
+            System.out.println("\nCompleted Chores: " + completedChores.size());
+            if (!completedChores.isEmpty()) {
+                for (Chore chore : completedChores) {
+                    User assignedUser = users.get(chore.assignedTo);
+                    String assignedName = assignedUser != null ? assignedUser.name : chore.assignedTo;
+                    System.out.println("  - " + chore.description + " (Completed by: " + assignedName + " on " + chore.completionDate + ") [✓]");
+                }
+            } else {
+                System.out.println("  No completed chores yet.");
             }
 
             System.out.println("\nOptions:");
             System.out.println("1. Add Chore");
-            System.out.println("2. Remove Chore");
-            System.out.println("3. View Members");
-            System.out.println("4. Back to Main Screen");
-            System.out.print("\nEnter choice (1-4): ");
+            System.out.println("2. Mark Chore as Complete");
+            System.out.println("3. Remove Chore");
+            System.out.println("4. View Members");
+            System.out.println("5. Back to Main Screen");
+            System.out.print("\nEnter choice (1-5): ");
 
             String choice = scanner.nextLine().trim();
 
@@ -404,17 +430,112 @@ public class ChoreSplitterApp {
                     addChore(householdId);
                     break;
                 case "2":
-                    System.out.println("\n[Feature not yet implemented]");
+                    markChoreAsComplete(householdId);
                     break;
                 case "3":
                     System.out.println("\n[Feature not yet implemented]");
                     break;
                 case "4":
+                    System.out.println("\n[Feature not yet implemented]");
+                    break;
+                case "5":
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
         }
+    }
+
+
+    public static void markChoreAsComplete(String householdId) {
+        Household household = households.get(householdId);
+        if (household == null) {
+            System.out.println("Household not found!");
+            return;
+        }
+
+        System.out.println("\n--- MARK CHORE AS COMPLETE ---");
+
+        // Get list of active chores
+        List<Chore> activeChores = new ArrayList<>();
+        for (Chore chore : household.chores) {
+            if (!chore.completed) {
+                activeChores.add(chore);
+            }
+        }
+
+        // Check if there are any active chores
+        if (activeChores.isEmpty()) {
+            System.out.println("No active chores to mark as complete.");
+            return;
+        }
+
+        // Display active chores
+        System.out.println("\nActive Chores:");
+        for (int i = 0; i < activeChores.size(); i++) {
+            Chore chore = activeChores.get(i);
+            User assignedUser = users.get(chore.assignedTo);
+            String assignedName = assignedUser != null ? assignedUser.name : chore.assignedTo;
+            System.out.println((i + 1) + ". " + chore.description + " (Assigned to: " + assignedName + ", Priority: " + chore.priority + ")");
+        }
+
+        // Get user's selection
+        int choreChoice = -1;
+        while (choreChoice < 1 || choreChoice > activeChores.size()) {
+            System.out.print("\nSelect chore number to mark as complete (1-" + activeChores.size() + ") or 0 to cancel: ");
+            try {
+                choreChoice = Integer.parseInt(scanner.nextLine().trim());
+                if (choreChoice == 0) {
+                    return;
+                }
+                if (choreChoice < 1 || choreChoice > activeChores.size()) {
+                    System.out.println("Invalid selection. Please try again.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+
+        // Get selected chore
+        Chore selectedChore = activeChores.get(choreChoice - 1);
+
+        // Display chore details
+        System.out.println("\n--- CHORE DETAILS ---");
+        System.out.println("Description: " + selectedChore.description);
+        System.out.println("Priority: " + selectedChore.priority);
+        System.out.println("Type: " + selectedChore.type);
+        User assignedUser = users.get(selectedChore.assignedTo);
+        String assignedName = assignedUser != null ? assignedUser.name : selectedChore.assignedTo;
+        System.out.println("Assigned to: " + assignedName);
+        System.out.println("Status: Active");
+
+        // Validate that chore is not already completed (Exception Flow A)
+        if (selectedChore.completed) {
+            System.out.println("\n✗ This chore is already marked as completed!");
+            return;
+        }
+
+        // Confirm completion
+        System.out.print("\nMark this chore as completed? (y/n): ");
+        String confirm = scanner.nextLine().trim().toLowerCase();
+        if (!confirm.equals("y") && !confirm.equals("yes")) {
+            System.out.println("Cancelled.");
+            return;
+        }
+
+        // Mark chore as complete
+        selectedChore.completed = true;
+
+        // Record completion timestamp (mm/dd/yyyy format)
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("MM/dd/yyyy");
+        selectedChore.completionDate = dateFormat.format(new Date());
+
+        // Save data
+        saveData();
+
+        System.out.println("\n✓ Chore marked as completed!");
+        System.out.println("Completion Date: " + selectedChore.completionDate);
+        System.out.println("The chore has been moved to the completed list.");
     }
 
 
@@ -604,12 +725,14 @@ public class ChoreSplitterApp {
                         String type = parts[4];
                         String assignedTo = parts[5];
                         boolean completed = parts.length > 6 ? Boolean.parseBoolean(parts[6]) : false;
+                        String completionDate = parts.length > 7 ? parts[7] : null;
 
                         Chore chore = new Chore(choreId, description);
                         chore.priority = priority;
                         chore.type = type;
                         chore.assignedTo = assignedTo;
                         chore.completed = completed;
+                        chore.completionDate = completionDate;
 
                         // Add chore to household
                         Household household = households.get(householdId);
@@ -685,7 +808,8 @@ public class ChoreSplitterApp {
                     line.append(chore.priority).append("|");
                     line.append(chore.type).append("|");
                     line.append(chore.assignedTo).append("|");
-                    line.append(chore.completed);
+                    line.append(chore.completed).append("|");
+                    line.append(chore.completionDate); // Persist completionDate
 
                     choreWriter.write(line.toString());
                     choreWriter.newLine();
@@ -788,6 +912,7 @@ class Chore {
     boolean completed;
     Date dueDate;
     Date completionTimestamp;
+    String completionDate; // Added completionDate field
 
     public Chore(String id, String description) {
         this.id = id;
