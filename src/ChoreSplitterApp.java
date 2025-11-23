@@ -935,14 +935,26 @@ public class ChoreSplitterApp {
                         Household household = new Household(parts[0], parts[1], parts[2]);
                         household.joinCode = parts[3];
 
-                        // Load members
-                        if (parts.length > 4 && !parts[4].isEmpty()) {
-                            String[] members = parts[4].split(",");
-                            for (String memberEmail : members) {
-                                household.memberEmails.add(memberEmail);
+                        if (parts.length == 5) {
+                            // old format, parts[4] = members
+                            String membersCsv = parts[4];
+                            if (!membersCsv.isEmpty()) {
+                                for (String memberEmail : membersCsv.split(",")) {
+                                    if (!memberEmail.isEmpty()) household.memberEmails.add(memberEmail);
+                                }
+                            }
+                            // assume first member is owner if present
+                            household.ownerEmail = household.memberEmails.isEmpty() ? null : household.memberEmails.get(0);
+                        }
+                        else if (parts.length >= 6) {
+                            household.ownerEmail = parts[4].isEmpty() ? null : parts[4];
+                            String membersCsv = parts[5];
+                            if (!membersCsv.isEmpty()) {
+                                for (String memberEmail : membersCsv.split(",")) {
+                                    if (!memberEmail.isEmpty()) household.memberEmails.add(memberEmail);
+                                }
                             }
                         }
-
                         households.put(parts[0], household);
                     }
                 }
