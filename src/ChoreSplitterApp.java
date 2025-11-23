@@ -1026,6 +1026,8 @@ public class ChoreSplitterApp {
                 line.append(household.name).append("|");
                 line.append(household.description).append("|");
                 line.append(household.joinCode).append("|");
+                line.append(household.ownerEmail == null ? "" : household.ownerEmail).append("|");
+        
 
                 // Save members
                 line.append(String.join(",", household.memberEmails));
