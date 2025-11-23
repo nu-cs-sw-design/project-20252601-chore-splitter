@@ -701,7 +701,7 @@ public class ChoreSplitterApp {
         // Get list of active chores
         List<Chore> activeChores = new ArrayList<>();
         for (Chore chore : household.chores) {
-            if (!chore.completed) {
+            if (!chore.completed && currentUser.email.equals(chore.assignedTo)) {
                 activeChores.add(chore);
             }
         }
