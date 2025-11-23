@@ -606,20 +606,27 @@ public class ChoreSplitterApp {
             return;
         }
 
+        // membership enforcement
+        if (!household.memberEmails.contains(currentUser.email)) {
+            System.out.println("You are not a member of this household!");
+            return;
+        }
+
         while (true) {
             System.out.println("\n=====================================");
             System.out.println("  HOUSEHOLD: " + household.name);
             System.out.println("=====================================");
             System.out.println("Description: " + household.description);
             System.out.println("Join Code: " + household.joinCode);
+            System.out.println("Owner: " + (household.ownerEmail == null ? "(unknown)" : household.ownerEmail));
             System.out.println("Members: " + household.memberEmails.size());
             System.out.println("\nMembers List:");
-            for (String email : household.memberEmails) {
-                User member = users.get(email);
-                if (member != null) {
-                    System.out.println("  - " + member.name + " (" + email + ")");
-                }
-            }
+            // for (String email : household.memberEmails) {
+            //     User member = users.get(email);
+            //     if (member != null) {
+            //         System.out.println("  - " + member.name + " (" + email + ")");
+            //     }
+            // }
 
             // Separate active and completed chores
             List<Chore> activeChores = new ArrayList<>();
@@ -656,11 +663,10 @@ public class ChoreSplitterApp {
 
             System.out.println("\nOptions:");
             System.out.println("1. Add Chore");
-            System.out.println("2. Mark Chore as Complete");
-            System.out.println("3. Remove Chore");
-            System.out.println("4. View Members");
-            System.out.println("5. Back to Main Screen");
-            System.out.print("\nEnter choice (1-5): ");
+            System.out.println("2. Mark Chore as Complete (only your assigned chores)");
+            System.out.println("3. Remove Chore (owner only)");
+            System.out.println("4. Back to Main Screen");
+            System.out.print("\nEnter choice (1-4): ");
 
             String choice = scanner.nextLine().trim();
 
@@ -672,10 +678,7 @@ public class ChoreSplitterApp {
                     markChoreAsComplete(householdId);
                     break;
                 case "3":
-                    System.out.println("\n[Feature not yet implemented]");
-                    break;
-                case "4":
-                    System.out.println("\n[Feature not yet implemented]");
+                    removeChore(householdId);
                     break;
                 case "5":
                     return;
