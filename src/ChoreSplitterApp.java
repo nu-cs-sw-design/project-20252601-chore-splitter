@@ -577,6 +577,8 @@ public class ChoreSplitterApp {
         String householdId = "HH" + System.currentTimeMillis();
         Household newHousehold = new Household(householdId, name, description);
 
+        newHousehold.ownerEmail = currentUser.email; // set owner
+
         // Add current user as the first member
         newHousehold.memberEmails.add(currentUser.email);
         currentUser.householdIds.add(householdId);
