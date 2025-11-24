@@ -780,6 +780,46 @@ public class ChoreSplitterApp {
         System.out.println("The chore has been moved to the completed list.");
     }
 
+    public static void removeChore(String householdId) {
+        Household household = households.get(householdId);
+        if (household == null) {
+            System.out.println("Household not found!");
+            return;
+        }
+
+        if (household.ownerEmail == null || !household.ownerEmail.equals(currentUser.email)) {
+            System.out.println("Only the household owner can remove chores.");
+            return;
+        }
+
+        if (household.chores.isEmpty()) {
+            System.out.println("No chores to remove.");
+            return;
+        }
+
+        System.out.println("\n--- REMOVE CHORE ---");
+        for (int i = 0; i < household.chores.size(); i++) {
+            Chore c = household.chores.get(i);
+            System.out.printf("%d) %s (Assigned to: %s, Completed: %s)%n", i + 1, c.description, c.assignedTo, c.completed ? "Yes" : "No");
+        }
+
+        int sel = -1;
+        while (sel < 1 || sel > household.chores.size()) {
+            System.out.print("Select chore number to remove (or 0 to cancel): ");
+            try {
+                sel = Integer.parseInt(scanner.nextLine().trim());
+                if (sel == 0) {
+                    return;
+                }
+            }
+            catch (NumberFormatException ignored) {}
+            
+
+            Chore removed = household.chores.remove(sel - 1);
+            System.out.println("✓ Chore '" + removed.description + "' removed successfully.");
+            saveData();
+        }
+    }
 
     public static void addChore(String householdId) {
         Household household = households.get(householdId);
