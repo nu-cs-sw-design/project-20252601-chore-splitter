@@ -680,7 +680,7 @@ public class ChoreSplitterApp {
                 case "3":
                     removeChore(householdId);
                     break;
-                case "5":
+                case "4":
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
