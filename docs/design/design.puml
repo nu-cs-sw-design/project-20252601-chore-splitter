@@ -1,183 +1,233 @@
 @startuml
 
 
-class User {
-  - email: String
-  - password: String
-  - name: String
-  - householdIds: List<String>
-  + User(email: String, password: String, name: String)
-  + login(email: String, password: String): boolean
-  + signUp(email: String, password: String, name: String): User
-  + getHouseholds(): List<Household>
+package "presentation" {
+
+  class WelcomeScreen {
+    + displayWelcome(): void
+    + promptAuthentication(): void
+    + navigateToLogin(): void
+    + navigateToSignUp(): void
+  }
+
+  class MainScreen {
+    - currentUser: User
+    + MainScreen(user: User)
+    + displayOptions(): void
+    + createHousehold(): void
+    + joinHousehold(): void
+    + openHousehold(): void
+    + generateReport(): void
+    + logout(): void
+  }
+
+  class HouseholdDashboard {
+    - household: Household
+    - currentUser: User
+    + HouseholdDashboard(household: Household, user: User)
+    + displayMembers(): void
+    + displayChores(): void
+    + displayActiveChores(): void
+    + displayCompletedChores(): void
+    + addChore(): void
+    + markChoreComplete(choreId: String): void
+    + removeChore(choreId: String): void
+  }
+
+  class ChoreForm {
+    - description: String
+    - priority: String
+    - type: String
+    - assignmentType: String
+    + ChoreForm()
+    + promptDetails(): void
+    + validateInput(): boolean
+    + submit(): Chore
+    + selectPriority(): String
+    + selectType(): String
+    + selectAssignment(): String
+  }
+
+  class HouseholdForm {
+    - name: String
+    - description: String
+    + HouseholdForm()
+    + promptDetails(): void
+    + validateInput(): boolean
+    + submit(): Household
+  }
+
+  class ReportDialog {
+    - startDate: String
+    - endDate: String
+    + ReportDialog()
+    + promptDateRange(): void
+    + validateDates(): boolean
+    + confirmGeneration(): boolean
+  }
 }
 
 
-class Household {
-  - id: String
-  - name: String
-  - description: String
-  - joinCode: String
-  - memberEmails: List<String>
-  - chores: List<Chore>
-  - ownerEmail: String
-  + Household(id: String, name: String, description: String)
-  + generateJoinCode(): String
-  + addMember(userEmail: String): void
-  + removeMember(userEmail: String): void
-  + addChore(chore: Chore): void
-  + removeChore(choreId: String): void
-  + getMembers(): List<User>
-  + getChores(): List<Chore>
-  + getActiveChores(): List<Chore>
-  + getCompletedChores(): List<Chore>
+package "domain" {
+
+  class User {
+    - email: String
+    - password: String
+    - name: String
+    - householdIds: List<String>
+    + User(email: String, password: String, name: String)
+    + login(email: String, password: String): boolean
+    + signUp(email: String, password: String, name: String): User
+    + getHouseholds(): List<Household>
+  }
+
+  class Household {
+    - id: String
+    - name: String
+    - description: String
+    - joinCode: String
+    - memberEmails: List<String>
+    - chores: List<Chore>
+    - ownerEmail: String
+    + Household(id: String, name: String, description: String)
+    + generateJoinCode(): String
+    + addMember(userEmail: String): void
+    + removeMember(userEmail: String): void
+    + addChore(chore: Chore): void
+    + removeChore(choreId: String): void
+    + getMembers(): List<User>
+    + getChores(): List<Chore>
+    + getActiveChores(): List<Chore>
+    + getCompletedChores(): List<Chore>
+  }
+
+  class Chore {
+    - id: String
+    - description: String
+    - priority: String
+    - type: String
+    - assignedTo: String
+    - completed: boolean
+    - completionDate: String
+    - dueDate: Date
+    - completionTimestamp: Date
+    + Chore(id: String, description: String)
+    + markAsComplete(): void
+    + assignTo(userEmail: String): void
+    + isCompleted(): boolean
+    + getAssignedUser(): User
+  }
+
+  class Credentials {
+    - email: String
+    - password: String
+    + Credentials(email: String, password: String)
+    + validate(): boolean
+    + getEmail(): String
+    + getPassword(): String
+  }
+
+  class Application {
+    - users: Map<String, User>
+    - households: Map<String, Household>
+    - currentUser: User
+    + Application()
+    + startApp(): void
+    + loadData(): void
+    + saveData(): void
+    + authenticate(credentials: Credentials): User
+    + validateCredentials(email: String, password: String): boolean
+    + createUser(email: String, password: String, name: String): User
+    + createHousehold(name: String, description: String, owner: User): Household
+    + joinHousehold(joinCode: String, user: User): Household
+    + findHouseholdByJoinCode(joinCode: String): Household
+    + readNonEmpty(prompt: String): String
+    + readEnum(prompt: String, allowed: String[]): String
+    + readIntInRange(prompt: String, min: int, max: int): int
+    + capitalizeChoice(v: String, allowed: String[]): String
+  }
+
+  class ReportService {
+    - startDate: String
+    - endDate: String
+    - completedChores: List<Chore>
+    - filePath: String
+    + ReportService(startDate: String, endDate: String)
+    + queryChores(households: List<Household>, startDate: String, endDate: String): List<Chore>
+    + generateReport(): void
+    + getStatistics(): Map<String, Integer>
+    + validateDateRange(): boolean
+  }
+}
+
+package "datasource" {
+
+  class UserDataSource {
+    - filePath: String
+    + UserDataSource(filePath: String)
+    + loadUsers(): Map<String, User>
+    + saveUsers(users: Map<String, User>): void
+    + findUserByEmail(email: String): User
+    + addUser(user: User): void
+    + updateUser(user: User): void
+  }
+
+  class HouseholdDataSource {
+    - filePath: String
+    + HouseholdDataSource(filePath: String)
+    + loadHouseholds(): Map<String, Household>
+    + saveHouseholds(households: Map<String, Household>): void
+    + findHouseholdById(id: String): Household
+    + findHouseholdByJoinCode(joinCode: String): Household
+    + addHousehold(household: Household): void
+    + updateHousehold(household: Household): void
+  }
+
+  class ChoreDataSource {
+    - filePath: String
+    + ChoreDataSource(filePath: String)
+    + loadChores(): List<Chore>
+    + saveChores(chores: List<Chore>): void
+    + findChoreById(id: String): Chore
+    + addChore(chore: Chore): void
+    + updateChore(chore: Chore): void
+    + deleteChore(choreId: String): void
+  }
+
+  class ReportWriter {
+    - reportsDirectory: String
+    + ReportWriter(reportsDirectory: String)
+    + writeToFile(filePath: String, content: String): void
+    + generateFilePath(startDate: String, endDate: String): String
+  }
 }
 
 
-class Chore {
-  - id: String
-  - description: String
-  - priority: String
-  - type: String
-  - assignedTo: String
-  - completed: boolean
-  - completionDate: String
-  - dueDate: Date
-  - completionTimestamp: Date
-  + Chore(id: String, description: String)
-  + markAsComplete(): void
-  + assignTo(userEmail: String): void
-  + isCompleted(): boolean
-  + getAssignedUser(): User
-}
 
 
-class Credentials {
-  - email: String
-  - password: String
-  + Credentials(email: String, password: String)
-  + validate(): boolean
-  + getEmail(): String
-  + getPassword(): String
-}
-
-
-class MainScreen {
-  - currentUser: User
-  + MainScreen(user: User)
-  + displayOptions(): void
-  + createHousehold(): void
-  + joinHousehold(): void
-  + openHousehold(): void
-  + generateReport(): void
-  + logout(): void
-}
-
-
-class HouseholdDashboard {
-  - household: Household
-  - currentUser: User
-  + HouseholdDashboard(household: Household, user: User)
-  + displayMembers(): void
-  + displayChores(): void
-  + displayActiveChores(): void
-  + displayCompletedChores(): void
-  + addChore(): void
-  + markChoreComplete(choreId: String): void
-  + removeChore(choreId: String): void
-}
-
-
-class WelcomeScreen {
-  + displayWelcome(): void
-  + promptAuthentication(): void
-  + navigateToLogin(): void
-  + navigateToSignUp(): void
-}
-
-
-class Report {
-  - startDate: String
-  - endDate: String
-  - completedChores: List<Chore>
-  - filePath: String
-  + Report(startDate: String, endDate: String)
-  + queryChores(households: List<Household>, startDate: String, endDate: String): List<Chore>
-  + generateReport(): void
-  + writeToFile(filePath: String): void
-  + getStatistics(): Map<String, Integer>
-  + validateDateRange(): boolean
-}
-
-
-class Application {
-  - users: Map<String, User>
-  - households: Map<String, Household>
-  - currentUser: User
-  + Application()
-  + startApp(): void
-  + loadData(): void
-  + saveData(): void
-  + authenticate(credentials: Credentials): User
-  + validateCredentials(email: String, password: String): boolean
-  + createUser(email: String, password: String, name: String): User
-  + createHousehold(name: String, description: String, owner: User): Household
-  + joinHousehold(joinCode: String, user: User): Household
-  + findHouseholdByJoinCode(joinCode: String): Household
-  + readNonEmpty(prompt: String): String
-  + readEnum(prompt: String, allowed: String[]): String
-  + readIntInRange(prompt: String, min: int, max: int): int
-  + capitalizeChoice(v: String, allowed: String[]): String
-}
-
-
-class ChoreForm {
-  - description: String
-  - priority: String
-  - type: String
-  - assignmentType: String
-  + ChoreForm()
-  + promptDetails(): void
-  + validateInput(): boolean
-  + submit(): Chore
-  + selectPriority(): String
-  + selectType(): String
-  + selectAssignment(): String
-}
-
-
-class HouseholdForm {
-  - name: String
-  - description: String
-  + HouseholdForm()
-  + promptDetails(): void
-  + validateInput(): boolean
-  + submit(): Household
-}
-
-
-class ReportDialog {
-  - startDate: String
-  - endDate: String
-  + ReportDialog()
-  + promptDateRange(): void
-  + validateDates(): boolean
-  + confirmGeneration(): boolean
-}
+WelcomeScreen ..> Application
+MainScreen ..> User
+MainScreen ..> Application
+HouseholdDashboard ..> Household
+HouseholdDashboard ..> User
+HouseholdDashboard ..> Application
+ChoreForm ..> Chore
+HouseholdForm ..> Household
+ReportDialog ..> ReportService
 
 User ..> Household
 Household ..> User
 Household ..> Chore
 Chore ..> User
-MainScreen ..> User
-HouseholdDashboard ..> Household
-HouseholdDashboard ..> User
-Report ..> Household
-Report ..> Chore
 Application ..> User
 Application ..> Household
 Application ..> Credentials
-ChoreForm ..> Chore
-HouseholdForm ..> Household
+ReportService ..> Household
+ReportService ..> Chore
+
+Application ..> UserDataSource
+Application ..> HouseholdDataSource
+Application ..> ChoreDataSource
+ReportService ..> ReportWriter
 
 @enduml
