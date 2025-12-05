@@ -109,13 +109,29 @@ package "domain" {
     - assignedTo: String
     - completed: boolean
     - completionDate: String
-    - dueDate: Date
-    - completionTimestamp: Date
+    - assignmentStrategy: ChoresAssignmentTemplate
     + Chore(id: String, description: String)
     + markAsComplete(): void
     + assignTo(userEmail: String): void
+    + setAssignmentStrategy(strategy: ChoresAssignmentTemplate): void
+    + performAssignment(members: List<User>): void
     + isCompleted(): boolean
     + getAssignedUser(): User
+  }
+
+  interface ChoresAssignmentTemplate {
+    + assign(chore: Chore, members: List<User>): String
+  }
+
+  class RandomAssignmentStrategy {
+    + RandomAssignmentStrategy()
+    + assign(chore: Chore, members: List<User>): String
+  }
+
+  class ManualAssignmentStrategy {
+    - selectedUserEmail: String
+    + ManualAssignmentStrategy(userEmail: String)
+    + assign(chore: Chore, members: List<User>): String
   }
 
   class Credentials {
@@ -212,6 +228,7 @@ HouseholdDashboard ..> Household
 HouseholdDashboard ..> User
 HouseholdDashboard ..> Application
 ChoreForm ..> Chore
+ChoreForm ..> ChoresAssignmentTemplate
 HouseholdForm ..> Household
 ReportDialog ..> ReportService
 
@@ -219,6 +236,9 @@ User ..> Household
 Household ..> User
 Household ..> Chore
 Chore ..> User
+Chore ..> ChoresAssignmentTemplate
+ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
+ChoresAssignmentTemplate <|.. ManualAssignmentStrategy
 Application ..> User
 Application ..> Household
 Application ..> Credentials
