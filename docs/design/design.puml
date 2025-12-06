@@ -181,15 +181,15 @@ package "domain" {
   }
 
   class ReportService {
-    - startDate: String
-    - endDate: String
-    - completedChores: List<Chore>
-    - filePath: String
-    + ReportService(startDate: String, endDate: String)
-    + queryChores(households: List<Household>, startDate: String, endDate: String): List<Chore>
-    + generateReport(): void
-    + getStatistics(): Map<String, Integer>
-    + validateDateRange(): boolean
+    - choreRepository: ChoreInterface
+    - householdRepository: HouseholdsInterface
+    - reportWriter: ReportWriter
+    - reportFormatter: ReportFormatter
+    + ReportService(choreRepository: ChoreInterface, householdRepository: HouseholdsInterface, reportWriter: ReportWriter, formatter: ReportFormatter)
+    + generateReport(userEmail: String, startDate: String, endDate: String): String
+    + queryCompletedChores(userEmail: String, startDate: String, endDate: String): List<Chore>
+    + calculateStatistics(chores: List<Chore>): Map<String, Object>
+    + validateDateRange(startDate: String, endDate: String): boolean
   }
 
   interface UserBaseInterface {
@@ -216,6 +216,18 @@ package "domain" {
     + addChore(chore: Chore): void
     + updateChore(chore: Chore): void
     + deleteChore(choreId: String): void
+  }
+
+  interface ReportFormatter {
+    + format(chores: List<Chore>, statistics: Map<String, Object>, startDate: String, endDate: String): String
+  }
+
+  class TextReportFormatter {
+    + format(chores: List<Chore>, statistics: Map<String, Object>, startDate: String, endDate: String): String
+  }
+
+  class CsvReportFormatter {
+    + format(chores: List<Chore>, statistics: Map<String, Object>, startDate: String, endDate: String): String
   }
 }
 
@@ -294,9 +306,17 @@ Household --> Chore
 Chore ..> ChoresAssignmentTemplate
 ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
 ChoresAssignmentTemplate <|.. ManualAssignmentStrategy
+ReportService ..> ChoreInterface
+ReportService ..> HouseholdsInterface
 ReportService ..> Household
 ReportService ..> Chore
 ReportService ..> ReportWriter
+ReportService ..> ReportFormatter
+ReportFormatter <|.. TextReportFormatter
+ReportFormatter <|.. CsvReportFormatter
+ReportFormatter ..> Chore
+TextReportFormatter ..> Chore
+CsvReportFormatter ..> Chore
 
 UserBaseInterface <|.. UserDataSource
 HouseholdsInterface <|.. HouseholdDataSource
