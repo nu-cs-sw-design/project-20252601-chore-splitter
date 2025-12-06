@@ -248,7 +248,53 @@ package "domain" {
   class CsvReportFormatter {
     + format(chores: List<Chore>, statistics: Map<String, Object>, startDate: String, endDate: String): String
   }
+
+  class ChoreReportEntry {
+    - householdName: String
+    - description: String
+    - priority: String
+    - type: String
+    - assignedName: String
+    - completed: boolean
+    - completionDate: String
+    + ChoreReportEntry(householdName: String, description: String, priority: String, type: String, assignedName: String, completed: boolean, completionDate: String)
+  
+  }
+
+  class PriorityChoreFilter {
+    - priority: String
+    + PriorityChoreFilter(priority: String)
+    + matches(chore: Chore): boolean
+  }
+
+  
+  class MemberChoreFilter {
+    - memberEmail: String
+    + MemberChoreFilter(memberEmail: String)
+    + matches(chore: Chore): boolean
+  }
+
+  class CompositeChoreFilter {
+    - filters: List<ChoreFilter>
+    - mode: String  ' "AND" or "OR"
+    + CompositeChoreFilter(filters: List<ChoreFilter>, mode: String)
+    + matches(chore: Chore): boolean
+  }
 }
+
+ChoreFilter <|.. PriorityChoreFilter
+ChoreFilter <|.. MemberChoreFilter
+ChoreFilter <|.. CompositeChoreFilter
+
+PriorityChoreFilter ..> Chore
+MemberChoreFilter ..> Chore
+CompositeChoreFilter ..> Chore
+CompositeChoreFilter ..> ChoreFilter
+
+ReportService ..> ChoreReportEntry
+ReportFormatter ..> ChoreReportEntry
+TextReportFormatter ..> ChoreReportEntry
+CsvReportFormatter ..> ChoreReportEntry
 
 package "datasource" {
 
