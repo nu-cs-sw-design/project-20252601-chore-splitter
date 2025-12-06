@@ -140,6 +140,25 @@ package "domain" {
     + assign(chore: Chore, members: List<User>): String
   }
 
+  interface ChoreFilter {
+    + matches(chore: Chore): boolean
+  }
+
+  class CompletedChoreFilter {
+    + matches(chore: Chore): boolean
+  }
+
+  class ActiveChoreFilter {
+    + matches(chore: Chore): boolean
+  }
+
+  class DateRangeChoreFilter {
+    - startDate: String
+    - endDate: String
+    + DateRangeChoreFilter(startDate: String, endDate: String)
+    + matches(chore: Chore): boolean
+  }
+
   class AuthenticationManager {
     - userRepository: UserBaseInterface
     + AuthenticationManager(userRepository: IUserRepository)
@@ -306,6 +325,16 @@ Household --> Chore
 Chore ..> ChoresAssignmentTemplate
 ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
 ChoresAssignmentTemplate <|.. ManualAssignmentStrategy
+ChoreFilter <|.. CompletedChoreFilter
+ChoreFilter <|.. ActiveChoreFilter
+ChoreFilter <|.. DateRangeChoreFilter
+ChoreFilter ..> Chore
+CompletedChoreFilter ..> Chore
+ActiveChoreFilter ..> Chore
+DateRangeChoreFilter ..> Chore
+Household ..> ChoreFilter
+ReportService ..> ChoreFilter
+HouseholdDashboard ..> ChoreFilter
 ReportService ..> ChoreInterface
 ReportService ..> HouseholdsInterface
 ReportService ..> Household
