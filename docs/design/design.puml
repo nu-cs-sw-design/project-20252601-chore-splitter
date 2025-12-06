@@ -75,13 +75,12 @@ package "domain" {
     - name: String
     - householdIds: List<String>
     + User(email: String, password: String, name: String)
-    + login(email: String, password: String): boolean
-    + signUp(email: String, password: String, name: String): User
-    + getHouseholds(): List<Household>
     + getEmail(): String
     + getName(): String
+    + getPassword(): String
     + getHouseholdIds(): List<String>
     + addHouseholdId(householdId: String): void
+    + setPassword(password: String): void
   }
 
   class Household {
@@ -141,6 +140,16 @@ package "domain" {
     + assign(chore: Chore, members: List<User>): String
   }
 
+  class AuthenticationManager {
+    - userRepository: UserBaseInterface
+    + AuthenticationManager(userRepository: IUserRepository)
+    + authenticate(email: String, password: String): User
+    + signUp(email: String, password: String, name: String): User
+    + validateCredentials(email: String, password: String): boolean
+    - hashPassword(password: String): String
+    - verifyPassword(plainPassword: String, hashedPassword: String): boolean
+  }
+
   class Credentials {
     - email: String
     - password: String
@@ -154,6 +163,7 @@ package "domain" {
     - userRepository: UserBaseInterface
     - householdRepository: HouseholdsInterface
     - choreRepository: ChoreInterface
+    - authenticationManager: AuthenticationManager
     - users: Map<String, User>
     - households: Map<String, Household>
     - currentUser: User
@@ -161,9 +171,6 @@ package "domain" {
     + startApp(): void
     + loadData(): void
     + saveData(): void
-    + authenticate(credentials: Credentials): User
-    + validateCredentials(email: String, password: String): boolean
-    + createUser(email: String, password: String, name: String): User
     + createHousehold(name: String, description: String, owner: User): Household
     + joinHousehold(joinCode: String, user: User): Household
     + findHouseholdByJoinCode(joinCode: String): Household
@@ -256,6 +263,7 @@ package "datasource" {
 
 
 WelcomeScreen ..> Application
+WelcomeScreen ..> AuthenticationManager
 MainScreen ..> Application
 MainScreen ..> User
 MainScreen ..> Household
@@ -275,9 +283,13 @@ ReportDialog ..> ReportService
 Application ..> UserBaseInterface
 Application ..> HouseholdsInterface
 Application ..> ChoreInterface
+Application ..> AuthenticationManager
 Application ..> User
 Application ..> Household
 Application ..> Credentials
+AuthenticationManager ..> UserBaseInterface
+AuthenticationManager ..> User
+AuthenticationManager ..> Credentials
 Household --> Chore
 Chore ..> ChoresAssignmentTemplate
 ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
