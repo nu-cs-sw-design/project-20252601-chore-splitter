@@ -67,7 +67,6 @@ package "presentation" {
   }
 }
 
-
 package "domain" {
 
   class User {
@@ -79,6 +78,10 @@ package "domain" {
     + login(email: String, password: String): boolean
     + signUp(email: String, password: String, name: String): User
     + getHouseholds(): List<Household>
+    + getEmail(): String
+    + getName(): String
+    + getHouseholdIds(): List<String>
+    + addHouseholdId(householdId: String): void
   }
 
   class Household {
@@ -117,6 +120,11 @@ package "domain" {
     + performAssignment(members: List<User>): void
     + isCompleted(): boolean
     + getAssignedUser(): User
+    + getId(): String
+    + getDescription(): String
+    + getPriority(): String
+    + getAssignedTo(): String
+    + getCompletionDate(): String
   }
 
   interface ChoresAssignmentTemplate {
@@ -124,7 +132,6 @@ package "domain" {
   }
 
   class RandomAssignmentStrategy {
-    + RandomAssignmentStrategy()
     + assign(chore: Chore, members: List<User>): String
   }
 
@@ -144,6 +151,9 @@ package "domain" {
   }
 
   class Application {
+    - userRepository: UserBaseInterface
+    - householdRepository: HouseholdsInterface
+    - choreRepository: ChoreInterface
     - users: Map<String, User>
     - households: Map<String, Household>
     - currentUser: User
@@ -173,6 +183,32 @@ package "domain" {
     + generateReport(): void
     + getStatistics(): Map<String, Integer>
     + validateDateRange(): boolean
+  }
+
+  interface UserBaseInterface {
+    + loadUsers(): Map<String, User>
+    + saveUsers(users: Map<String, User>): void
+    + findUserByEmail(email: String): User
+    + addUser(user: User): void
+    + updateUser(user: User): void
+  }
+
+  interface HouseholdsInterface {
+    + loadHouseholds(): Map<String, Household>
+    + saveHouseholds(households: Map<String, Household>): void
+    + findHouseholdById(id: String): Household
+    + findHouseholdByJoinCode(joinCode: String): Household
+    + addHousehold(household: Household): void
+    + updateHousehold(household: Household): void
+  }
+
+  interface ChoreInterface {
+    + loadChores(): List<Chore>
+    + saveChores(chores: List<Chore>): void
+    + findChoreById(id: String): Chore
+    + addChore(chore: Chore): void
+    + updateChore(chore: Chore): void
+    + deleteChore(choreId: String): void
   }
 }
 
@@ -219,35 +255,45 @@ package "datasource" {
 }
 
 
-
-
 WelcomeScreen ..> Application
-MainScreen ..> User
 MainScreen ..> Application
+MainScreen ..> User
+MainScreen ..> Household
+HouseholdDashboard ..> Application
 HouseholdDashboard ..> Household
 HouseholdDashboard ..> User
-HouseholdDashboard ..> Application
+HouseholdDashboard ..> Chore
+ChoreForm ..> Application
 ChoreForm ..> Chore
 ChoreForm ..> ChoresAssignmentTemplate
+ChoreForm ..> ManualAssignmentStrategy
+ChoreForm ..> RandomAssignmentStrategy
+HouseholdForm ..> Application
 HouseholdForm ..> Household
 ReportDialog ..> ReportService
 
-User ..> Household
-Household ..> User
-Household ..> Chore
-Chore ..> User
-Chore ..> ChoresAssignmentTemplate
-ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
-ChoresAssignmentTemplate <|.. ManualAssignmentStrategy
+Application ..> UserBaseInterface
+Application ..> HouseholdsInterface
+Application ..> ChoreInterface
 Application ..> User
 Application ..> Household
 Application ..> Credentials
+Household --> Chore
+Chore ..> ChoresAssignmentTemplate
+ChoresAssignmentTemplate <|.. RandomAssignmentStrategy
+ChoresAssignmentTemplate <|.. ManualAssignmentStrategy
 ReportService ..> Household
 ReportService ..> Chore
-
-Application ..> UserDataSource
-Application ..> HouseholdDataSource
-Application ..> ChoreDataSource
 ReportService ..> ReportWriter
+
+UserBaseInterface <|.. UserDataSource
+HouseholdsInterface <|.. HouseholdDataSource
+ChoreInterface <|.. ChoreDataSource
+UserBaseInterface ..> User
+HouseholdsInterface ..> Household
+ChoreInterface ..> Chore
+UserDataSource ..> User
+HouseholdDataSource ..> Household
+ChoreDataSource ..> Chore
 
 @enduml
