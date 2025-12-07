@@ -99,6 +99,7 @@ package "domain" {
     + removeChore(choreId: String): void
     + getMembers(): List<User>
     + getChores(): List<Chore>
+    + getFilteredChores(filter: ChoreFilter): List<Chore>
     + getActiveChores(): List<Chore>
     + getCompletedChores(): List<Chore>
   }
@@ -209,6 +210,7 @@ package "domain" {
     + ReportService(choreRepository: ChoreInterface, householdRepository: HouseholdsInterface, reportWriter: ReportWriter, formatter: ReportFormatter)
     + generateReport(userEmail: String, startDate: String, endDate: String): String
     + queryCompletedChores(userEmail: String, startDate: String, endDate: String): List<Chore>
+    + filterChores(chores: List<Chore>, filter: ChoreFilter): List<Chore>
     + calculateStatistics(chores: List<Chore>): Map<String, Object>
     + validateDateRange(startDate: String, endDate: String): boolean
   }
