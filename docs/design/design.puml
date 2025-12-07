@@ -183,6 +183,7 @@ package "domain" {
     - householdRepository: HouseholdsInterface
     - choreRepository: ChoreInterface
     - authenticationManager: AuthenticationManager
+    - reportService: ReportService
     - users: Map<String, User>
     - households: Map<String, Household>
     - currentUser: User
@@ -193,6 +194,7 @@ package "domain" {
     + createHousehold(name: String, description: String, owner: User): Household
     + joinHousehold(joinCode: String, user: User): Household
     + findHouseholdByJoinCode(joinCode: String): Household
+    + generateReport(startDate: String, endDate: String): String
     + readNonEmpty(prompt: String): String
     + readEnum(prompt: String, allowed: String[]): String
     + readIntInRange(prompt: String, min: int, max: int): int
@@ -361,6 +363,7 @@ Application ..> UserBaseInterface
 Application ..> HouseholdsInterface
 Application ..> ChoreInterface
 Application ..> AuthenticationManager
+Application ..> ReportService
 Application ..> User
 Application ..> Household
 Application ..> Credentials
