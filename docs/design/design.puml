@@ -162,7 +162,7 @@ package "domain" {
 
   class AuthenticationManager {
     - userRepository: UserBaseInterface
-    + AuthenticationManager(userRepository: IUserRepository)
+    + AuthenticationManager(userRepository: UserBaseInterface)
     + authenticate(email: String, password: String): User
     + signUp(email: String, password: String, name: String): User
     + validateCredentials(email: String, password: String): boolean
